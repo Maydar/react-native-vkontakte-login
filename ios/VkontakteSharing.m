@@ -39,6 +39,41 @@ RCT_EXPORT_MODULE();
   return dispatch_get_main_queue();
 }
 
+RCT_EXPORT_METHOD(wallPost: (NSDictionary *) data resolver: (RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
+  DMLog(@"Open Share Dialog");
+  if (![VKSdk initialized]){
+    reject(RCTErrorUnspecified, nil, RCTErrorWithMessage(@"VK SDK must be initialized first"));
+    return;
+  }
+
+  NSArray *permissions = @[VK_PER_WALL];
+  VKSdk *sdk = [VKSdk instance];
+  if (![sdk hasPermissions:permissions]){
+    reject(RCTErrorUnspecified, nil, RCTErrorWithMessage(@"Access denied: no permission 'wall' to call this method"));
+    return;
+  }
+
+  VKRequest *postReq = [[VKApi wall] post:@{
+                                            VK_API_ATTACHMENTS : [RCTConvert NSString:data[@"link"]],
+                                            VK_API_MESSAGE : [RCTConvert NSString:data[@"text"]]
+                                            }];
+  postReq.attempts = 5;
+
+  [postReq executeWithResultBlock:^(VKResponse *response) {
+    DMLog(@"wallPost JSON result: %@", response.json);
+    resolve(response.json);
+  } errorBlock:^(NSError * error) {
+    if (error.code != VK_API_ERROR) {
+      [error.vkError.request repeat];
+    } else {
+      DMLog(@"wallPost VK error: %@", error);
+
+      NSString *errMessage = [NSString stringWithFormat:@"%@", [error localizedDescription]];
+      reject(RCTErrorUnspecified, nil, RCTErrorWithMessage(errMessage));
+    }
+  }];
+}
+
 RCT_EXPORT_METHOD(share: (NSDictionary *) data resolver: (RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
   DMLog(@"Open Share Dialog");
   if (![VKSdk initialized]){

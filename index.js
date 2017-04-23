@@ -4,9 +4,13 @@ import resolveAssetSource from 'react-native/Libraries/Image/resolveAssetSource'
 module.exports = NativeModules.VkontakteManager;
 
 module.exports.share = (options) => {
-  if (options.image) {
-    options.image = resolveAssetSource(options.image).uri;
-  }
+    if (options.image) {
+        options.image = resolveAssetSource(options.image).uri;
+    }
 
-  return NativeModules.VkontakteSharing.share(options);
+    return NativeModules.VkontakteSharing.share(options);
+};
+
+module.exports.wallPost = (options) => {
+    return NativeModules.VkontakteSharing.wallPost(options);
 };
